@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loan Approval Calculator</title>
+  <style>
+    :root {
+      --primary: #0f172a;       
+      --accent: #3b82f6;      
+      --accent-hover: #2563eb;
+      --light: #f8fafc;        
+      --dark: #1e293b;         
+      --border: #e2e8f0;
+      --radius: 12px;
+      --success: #10b981; 
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--light);
+      color: var(--dark);
+      line-height: 1.6;
+      padding: 40px 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    /* Form Container Setup */
+    form {
+      background: white;
+      border-radius: var(--radius);
+      max-width: 850px;
+      width: 100%;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+      display: grid;
+      grid-template-columns: 3fr 2fr; /* Creates the two columns */
+      overflow: hidden; /* Ensures rounded corners apply to backgrounds */
+      position: relative;
+    }
+
+    /* Left Column: Inputs */
+    .input-column {
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    /* Right Column: Results */
+    .results-column {
+      background: linear-gradient(135deg, var(--primary), var(--dark));
+      color: white;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 20px;
+    }
+
+    .results-column h3 {
+      font-size: 1.5rem;
+      margin-bottom: 10px;
+      color: #94a3b8;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      font-size: 0.95rem;
+      margin-bottom: 5px;
+    }
+
+    .input-column label {
+      color: var(--primary);
+    }
+
+    .results-column label {
+      color: #cbd5e1;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="email"],
+    textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-family: inherit;
+      background-color: #fff;
+      color: var(--dark);
+      font-size: 0.95rem;
+      transition: border-color 0.2s;
+    }
+    
+    input:focus,
+    textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    /* Styling the read-only results so they pop against the dark background */
+    .results-column input {
+      background-color: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      font-size: 1.75rem;
+      font-weight: bold;
+      padding: 15px;
+      pointer-events: none; /* Prevents user editing */
+    }
+
+    .results-column input::placeholder {
+      color: rgba(255, 255, 255, 0.3);
+    }
+
+    .flex-row {
+      display: flex;
+      gap: 15px;
+    }
+
+    .flex-row > div {
+      flex: 1;
+    }
+
+    button {
+      margin-top: 10px;
+      padding: 14px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    button:hover {
+      background: var(--accent-hover);
+    }
+    
+    button:disabled {
+      background: #94a3b8;
+      cursor: not-allowed;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+    
+    .toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #ffffff;
+      color: var(--dark);
+      padding: 16px 24px;
+      border-radius: 8px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      border-left: 4px solid var(--success);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transform: translateX(120%);
+      transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 2000;
+      font-weight: 500;
+    }
+
+    .toast.show {
+      transform: translateX(0);
+    }
+
+    .toast-icon {
+      background: #ecfdf5;
+      color: var(--success);
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 0.85rem;
+    }
+
+    /* Mobile Responsiveness: Stacks the columns on small screens */
+    @media (max-width: 768px) {
+      form {
+        grid-template-columns: 1fr;
+      }
+      .results-column {
+        padding: 30px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div id="successToast" class="toast">
+  <div class="toast-icon">✓</div>
+  <div>Loan application submitted!</div>
+</div>
+
+<form id="loanForm">
+  
+  <div class="input-column">
+    <div>
+      <label for="name">Full Name</label>
+      <input type="text" name="name" id="name" required>
+    </div>
+
+    <div>
+      <label for="email">Email Address</label>
+      <input type="email" name="email" id="email" required>
+    </div>
+
+    <div>
+      <label for="amount">Loan Amount ($)</label>
+      <input type="number" name="amount" id="amount" min="100" step="100" required placeholder="10000">
+    </div>
+
+    <div class="flex-row">
+      <div>
+        <label for="rate">Interest Rate (%)</label>
+        <input type="number" name="rate" id="rate" min="0.1" step="0.1" required placeholder="5.5">
+      </div>
+      <div>
+        <label for="term">Term (Months)</label>
+        <input type="number" name="term" id="term" min="1" step="1" required placeholder="36">
+      </div>
+    </div>
+
+    <div>
+      <label for="purpose">Loan Purpose</label>
+      <textarea name="purpose" id="purpose" rows="2" required placeholder="Reason for the loan..."></textarea>
+    </div>
+
+    <button type="submit" id="submitBtn">Submit Application</button>
+  </div>
+
+  <div class="results-column">
+    <h3>Loan Summary</h3>
+    
+    <div>
+      <label>Estimated Monthly Payment</label>
+      <input type="text" name="monthlyPayment" id="monthlyPayment" readonly placeholder="₱0.00">
+    </div>
+    
+    <div>
+      <label>Total Amount to Repay</label>
+      <input type="text" name="totalRepayment" id="totalRepayment" readonly placeholder="₱0.00">
+    </div>
+    
+    <p style="font-size: 0.85rem; color: #94a3b8; margin-top: 10px;">
+      *These figures are estimates. Final approval and terms are subject to formal underwriting.
+    </p>
+  </div>
+
+</form>
+
+<script>
+ 
+  const amountInput = document.getElementById('amount');
+  const rateInput = document.getElementById('rate');
+  const termInput = document.getElementById('term');
+  const monthlyOutput = document.getElementById('monthlyPayment');
+  const totalOutput = document.getElementById('totalRepayment');
+
+  function calculateLoan() {
+    const amount = parseFloat(amountInput.value);
+    const rate = parseFloat(rateInput.value);
+    const term = parseInt(termInput.value);
+
+    if (amount > 0 && rate > 0 && term > 0) {
+      const monthlyRate = (rate / 100) / 12;
+      const mathPow = Math.pow(1 + monthlyRate, term);
+      
+      const monthlyPayment = (amount * monthlyRate * mathPow) / (mathPow - 1);
+      const totalPayment = monthlyPayment * term;
+
+      monthlyOutput.value = '₱' + monthlyPayment.toFixed(2);
+      totalOutput.value = '₱' + totalPayment.toFixed(2);
+    } else {
+      monthlyOutput.value = '';
+      totalOutput.value = '';
+    }
+  }
+
+  amountInput.addEventListener('input', calculateLoan);
+  rateInput.addEventListener('input', calculateLoan);
+  termInput.addEventListener('input', calculateLoan);
+
+
+
+  const scriptURL = 'https://script.google.com/macros/s/AKfycbyMa6fgwoNSDeAZ8aVCKir9AHQEdqEH9Gca7lAeafeMTegBM7uuD6pLaOFeghsfiJk/exec';
+  const form = document.getElementById('loanForm');
+  const submitBtn = document.getElementById('submitBtn');
+  const toast = document.getElementById('successToast');
+
+  form.addEventListener('submit', e => {
+    e.preventDefault(); 
+    
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Submitting...';
+
+    fetch(scriptURL, { method: 'POST', body: new FormData(form)})
+      .then(response => {
+        toast.classList.add('show');
+        form.reset();
+        calculateLoan(); 
+        
+        setTimeout(() => {
+          toast.classList.remove('show');
+        }, 4000);
+      })
+      .catch(error => alert('Error! ' + error.message))
+      .finally(() => {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Application';
+      });
+  });
+</script>
+
+</body>
+</html>
